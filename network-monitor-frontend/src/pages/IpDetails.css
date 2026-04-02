@@ -1,0 +1,23 @@
+.ip-grid {
+  grid-template-columns: 1fr;
+}
+
+.ip-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.empty-panel {
+  text-align: center;
+}
+
+.empty-panel h2 {
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .ip-columns {
+    grid-template-columns: 1fr;
+  }
+}

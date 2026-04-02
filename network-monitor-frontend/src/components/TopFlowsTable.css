@@ -1,0 +1,7 @@
+.table-card {
+  overflow: hidden;
+}
+
+.flows-table tbody tr:hover {
+  background: rgba(93, 214, 255, 0.05);
+}

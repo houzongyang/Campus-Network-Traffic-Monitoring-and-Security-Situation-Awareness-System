@@ -1,0 +1,52 @@
+.page-intro {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.ws-status-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid rgba(130, 157, 214, 0.2);
+  border-radius: 999px;
+  background: rgba(8, 17, 31, 0.55);
+}
+
+.ws-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ws-connected {
+  color: #8ae9a6;
+  background: rgba(89, 212, 124, 0.18);
+}
+
+.ws-connecting,
+.ws-reconnecting {
+  color: #ffc97d;
+  background: rgba(255, 180, 84, 0.18);
+}
+
+.ws-disconnected {
+  color: #ff8f8f;
+  background: rgba(255, 107, 107, 0.18);
+}
+
+.ws-count {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+@media (max-width: 960px) {
+  .page-intro {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,22 @@
+.chart-card {
+  overflow: hidden;
+}
+
+.chart-card-head {
+  padding: 1.15rem 1.2rem 0;
+}
+
+.chart-card-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.chart-card-head p {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+}
+
+.chart-surface {
+  width: 100%;
+  min-height: 280px;
+}

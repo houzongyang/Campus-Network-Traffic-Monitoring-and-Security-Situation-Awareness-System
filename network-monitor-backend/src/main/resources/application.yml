@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: network-monitor
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/network_monitor}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    root: INFO
+    com.campus.network: INFO
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+app:
+  dashboard:
+    overview-cache-ms: ${APP_DASHBOARD_OVERVIEW_CACHE_MS:1000}
+    ws-push-interval-ms: ${APP_DASHBOARD_WS_PUSH_INTERVAL_MS:2000}
+    ws-push-initial-delay-ms: ${APP_DASHBOARD_WS_PUSH_INITIAL_DELAY_MS:3000}
+  demo:
+    auto-init: ${APP_DEMO_AUTO_INIT:true}
+    init-flow-count: ${APP_DEMO_INIT_FLOW_COUNT:6000}
+    stale-minutes: ${APP_DEMO_STALE_MINUTES:5}
+    stream-interval-ms: ${APP_DEMO_STREAM_INTERVAL_MS:30000}
+    stream-initial-delay-ms: ${APP_DEMO_STREAM_INITIAL_DELAY_MS:30000}
+    stream-batch-flow-count: ${APP_DEMO_STREAM_BATCH_FLOW_COUNT:90}
+    stream-window-seconds: ${APP_DEMO_STREAM_WINDOW_SECONDS:45}
+    retention-minutes: ${APP_DEMO_RETENTION_MINUTES:120}
+    target-throughput-gbps: ${APP_DEMO_TARGET_THROUGHPUT_GBPS:12}
+    target-throughput-jitter-ratio: ${APP_DEMO_TARGET_THROUGHPUT_JITTER_RATIO:0.18}
+    rebuild-check-interval-ms: ${APP_DEMO_REBUILD_CHECK_INTERVAL_MS:300000}
+    rebuild-check-initial-delay-ms: ${APP_DEMO_REBUILD_CHECK_INITIAL_DELAY_MS:120000}
