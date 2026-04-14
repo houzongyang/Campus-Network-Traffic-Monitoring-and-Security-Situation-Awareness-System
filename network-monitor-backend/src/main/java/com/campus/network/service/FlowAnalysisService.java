@@ -1,9 +1,10 @@
 package com.campus.network.service;
 
 import com.campus.network.model.NetworkFlow;
+import com.campus.network.repository.FlowSearchJdbcRepository;
 import com.campus.network.repository.NetworkFlowRepository;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -34,50 +35,41 @@ public class FlowAnalysisService {
     }
 
     private final NetworkFlowRepository flowRepository;
+    private final FlowSearchJdbcRepository flowSearchJdbcRepository;
 
-    public FlowAnalysisService(NetworkFlowRepository flowRepository) {
+    public FlowAnalysisService(
+            NetworkFlowRepository flowRepository,
+            FlowSearchJdbcRepository flowSearchJdbcRepository
+    ) {
         this.flowRepository = flowRepository;
+        this.flowSearchJdbcRepository = flowSearchJdbcRepository;
     }
 
     public double calculateThroughputMbps(LocalDateTime startTime, LocalDateTime endTime) {
-        List<NetworkFlow> flows = flowRepository.findByTimestampBetweenOrderByTimestampDesc(startTime, endTime);
-        long totalBytes = flows.stream().mapToLong(this::totalBytes).sum();
+        long totalBytes = zeroSafe(flowRepository.sumTotalBytesBetween(startTime, endTime));
         long durationSeconds = Math.max(1L, ChronoUnit.SECONDS.between(startTime, endTime));
         return (totalBytes * 8.0D) / (durationSeconds * 1_000_000D);
     }
 
     public double calculatePps(LocalDateTime startTime, LocalDateTime endTime) {
-        List<NetworkFlow> flows = flowRepository.findByTimestampBetweenOrderByTimestampDesc(startTime, endTime);
-        long totalPackets = flows.stream().mapToLong(this::totalPackets).sum();
+        long totalPackets = zeroSafe(flowRepository.sumTotalPacketsBetween(startTime, endTime));
         long durationSeconds = Math.max(1L, ChronoUnit.SECONDS.between(startTime, endTime));
         return totalPackets / (double) durationSeconds;
     }
 
     public long countActiveIps(LocalDateTime startTime, LocalDateTime endTime) {
-        Set<String> activeIps = new HashSet<>();
-        flowRepository.findByTimestampBetweenOrderByTimestampDesc(startTime, endTime).forEach(flow -> {
-            activeIps.add(flow.getSrcIp());
-            activeIps.add(flow.getDstIp());
-        });
-        return activeIps.size();
+        return flowRepository.countDistinctActiveIpsBetween(startTime, endTime);
     }
 
     public Map<String, Long> getAppProtocolDistribution(LocalDateTime startTime, LocalDateTime endTime, String metric) {
-        return flowRepository.findByTimestampBetweenOrderByTimestampDesc(startTime, endTime).stream()
-                .collect(Collectors.groupingBy(
-                        flow -> normalizeText(flow.getAppProtocol(), "Unknown"),
-                        Collectors.summingLong(flow -> metricValue(flow, metric))
-                ))
-                .entrySet()
-                .stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(12)
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (left, right) -> left,
-                        LinkedHashMap::new
-                ));
+        List<Object[]> rows = "packets".equalsIgnoreCase(metric)
+                ? flowRepository.aggregateAppPacketsBetween(startTime, endTime, 12)
+                : flowRepository.aggregateAppBytesBetween(startTime, endTime, 12);
+        Map<String, Long> distribution = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            distribution.put(String.valueOf(row[0]), ((Number) row[1]).longValue());
+        }
+        return distribution;
     }
 
     public List<Map<String, Object>> getTopFlows(LocalDateTime startTime, LocalDateTime endTime, int limit, String metric) {
@@ -109,24 +101,14 @@ public class FlowAnalysisService {
 
     public Map<String, Map<String, Object>> getRegionTraffic(LocalDateTime startTime, LocalDateTime endTime) {
         Map<String, Map<String, Object>> regionStats = new LinkedHashMap<>();
-
-        flowRepository.findByTimestampBetweenOrderByTimestampDesc(startTime, endTime).stream()
-                .collect(Collectors.groupingBy(NetworkFlow::getRegion))
-                .forEach((region, flows) -> {
-                    Set<String> uniqueIps = new HashSet<>();
-                    flows.forEach(flow -> {
-                        uniqueIps.add(flow.getSrcIp());
-                        uniqueIps.add(flow.getDstIp());
-                    });
-
-                    Map<String, Object> item = new LinkedHashMap<>();
-                    item.put("bytes", flows.stream().mapToLong(this::totalBytes).sum());
-                    item.put("packets", flows.stream().mapToLong(this::totalPackets).sum());
-                    item.put("flowCount", flows.size());
-                    item.put("activeIps", uniqueIps.size());
-                    regionStats.put(region, item);
-                });
-
+        for (Object[] row : flowRepository.aggregateRegionTrafficBetween(startTime, endTime)) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("bytes", ((Number) row[1]).longValue());
+            item.put("packets", ((Number) row[2]).longValue());
+            item.put("flowCount", ((Number) row[3]).longValue());
+            item.put("activeIps", ((Number) row[4]).longValue());
+            regionStats.put(String.valueOf(row[0]), item);
+        }
         return regionStats;
     }
 
@@ -167,22 +149,18 @@ public class FlowAnalysisService {
         int normalizedBucketMinutes = Math.max(bucketMinutes, 1);
         LocalDateTime alignedStartTime = alignDownToBucket(startTime, normalizedBucketMinutes);
         LocalDateTime alignedEndTime = alignDownToBucket(endTime, normalizedBucketMinutes);
-        List<NetworkFlow> flows = flowRepository.findByTimestampBetweenOrderByTimestampDesc(alignedStartTime, endTime);
         List<Map<String, Object>> trend = new ArrayList<>();
-        LocalDateTime cursor = alignedStartTime;
-
-        while (!cursor.isAfter(alignedEndTime)) {
-            LocalDateTime bucketStart = cursor;
-            LocalDateTime bucketEnd = cursor.plusMinutes(normalizedBucketMinutes);
+        for (Object[] row : flowRepository.aggregateThroughputTrendBetween(
+                alignedStartTime,
+                endTime,
+                normalizedBucketMinutes * 60L
+        )) {
+            LocalDateTime bucketStart = toLocalDateTime(row[0]);
+            LocalDateTime bucketEnd = bucketStart.plusMinutes(normalizedBucketMinutes);
             LocalDateTime effectiveBucketEnd = bucketEnd.isAfter(endTime) ? endTime : bucketEnd;
-            List<NetworkFlow> bucketFlows = flows.stream()
-                    .filter(flow -> !flow.getTimestamp().isBefore(bucketStart) && flow.getTimestamp().isBefore(bucketEnd))
-                    .toList();
-
-            long bytes = bucketFlows.stream().mapToLong(this::totalBytes).sum();
-            long packets = bucketFlows.stream().mapToLong(this::totalPackets).sum();
+            long bytes = ((Number) row[1]).longValue();
+            long packets = ((Number) row[2]).longValue();
             long durationSeconds = Math.max(1L, ChronoUnit.SECONDS.between(bucketStart, effectiveBucketEnd));
-
             Map<String, Object> point = new LinkedHashMap<>();
             point.put("time", bucketStart);
             point.put("bytes", bytes);
@@ -190,10 +168,7 @@ public class FlowAnalysisService {
             point.put("throughputMbps", (bytes * 8.0D) / (durationSeconds * 1_000_000D));
             point.put("pps", packets / (double) durationSeconds);
             trend.add(point);
-
-            cursor = bucketEnd;
         }
-
         return trend;
     }
 
@@ -207,16 +182,22 @@ public class FlowAnalysisService {
             LocalDateTime endTime,
             int limit
     ) {
-        return flowRepository.searchFlows(
-                normalizeFilter(srcIp),
-                normalizeFilter(dstIp),
+        return flowSearchJdbcRepository.search(
+                srcIp,
+                dstIp,
+                null,
+                null,
                 srcPort,
                 dstPort,
-                normalizeFilter(appProtocol),
+                null,
+                null,
+                null,
+                appProtocol,
                 startTime,
                 endTime,
-                PageRequest.of(0, Math.max(limit, 1))
-        ).getContent();
+                0,
+                Math.max(limit, 1)
+        ).flows();
     }
 
     public FlowSearchPage searchFlowsAdvanced(
@@ -237,26 +218,24 @@ public class FlowAnalysisService {
     ) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = Math.max(1, Math.min(size, 500));
-        List<NetworkFlow> filtered = flowRepository.findByTimestampBetweenOrderByTimestampDesc(startTime, endTime)
-                .stream()
-                .filter(flow -> matchesText(flow.getSrcIp(), srcIp))
-                .filter(flow -> matchesText(flow.getDstIp(), dstIp))
-                .filter(flow -> matchesCidr(flow.getSrcIp(), srcCidr))
-                .filter(flow -> matchesCidr(flow.getDstIp(), dstCidr))
-                .filter(flow -> srcPort == null || srcPort.equals(flow.getSrcPort()))
-                .filter(flow -> dstPort == null || dstPort.equals(flow.getDstPort()))
-                .filter(flow -> matchesPortRange(flow.getDstPort(), dstPortFrom, dstPortTo))
-                .filter(flow -> matchesText(flow.getProtocol(), protocol))
-                .filter(flow -> matchesText(flow.getAppProtocol(), appProtocol))
-                .sorted(Comparator.comparing(NetworkFlow::getTimestamp).reversed())
-                .toList();
-
-        long totalElements = filtered.size();
-        int fromIndex = Math.min(normalizedPage * normalizedSize, filtered.size());
-        int toIndex = Math.min(fromIndex + normalizedSize, filtered.size());
-        int totalPages = (int) Math.ceil(totalElements / (double) normalizedSize);
-
-        return new FlowSearchPage(filtered.subList(fromIndex, toIndex), totalElements, normalizedPage, normalizedSize, totalPages);
+        FlowSearchJdbcRepository.QueryResult result = flowSearchJdbcRepository.search(
+                srcIp,
+                dstIp,
+                srcCidr,
+                dstCidr,
+                srcPort,
+                dstPort,
+                dstPortFrom,
+                dstPortTo,
+                protocol,
+                appProtocol,
+                startTime,
+                endTime,
+                normalizedPage,
+                normalizedSize
+        );
+        int totalPages = (int) Math.ceil(result.totalElements() / (double) normalizedSize);
+        return new FlowSearchPage(result.flows(), result.totalElements(), normalizedPage, normalizedSize, totalPages);
     }
 
     public Map<String, Object> buildIpProfile(String ip, LocalDateTime startTime, LocalDateTime endTime) {
@@ -372,6 +351,23 @@ public class FlowAnalysisService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    private long zeroSafe(Long value) {
+        return value == null ? 0L : value;
+    }
+
+    private LocalDateTime toLocalDateTime(Object value) {
+        if (value instanceof Timestamp timestamp) {
+            return timestamp.toLocalDateTime();
+        }
+        if (value instanceof Instant instant) {
+            return LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault());
+        }
+        if (value instanceof LocalDateTime localDateTime) {
+            return localDateTime;
+        }
+        throw new IllegalArgumentException("Unsupported timestamp value: " + value);
+    }
+
     private LocalDateTime alignDownToBucket(LocalDateTime time, int bucketMinutes) {
         int normalizedBucketMinutes = Math.max(bucketMinutes, 1);
         int alignedMinute = time.getMinute() / normalizedBucketMinutes * normalizedBucketMinutes;
@@ -380,72 +376,6 @@ public class FlowAnalysisService {
 
     private String normalizeText(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
-    }
-
-    private boolean matchesText(String value, String condition) {
-        if (condition == null || condition.isBlank()) {
-            return true;
-        }
-        if (value == null || value.isBlank()) {
-            return false;
-        }
-        String normalizedCondition = condition.trim();
-        if (normalizedCondition.contains("*")) {
-            String regex = normalizedCondition.replace(".", "\\.").replace("*", ".*");
-            return value.matches(regex);
-        }
-        return value.equalsIgnoreCase(normalizedCondition);
-    }
-
-    private boolean matchesPortRange(Integer port, Integer from, Integer to) {
-        if (port == null) {
-            return false;
-        }
-        if (from == null && to == null) {
-            return true;
-        }
-        int lower = from == null ? Integer.MIN_VALUE : from;
-        int upper = to == null ? Integer.MAX_VALUE : to;
-        return port >= lower && port <= upper;
-    }
-
-    private boolean matchesCidr(String ip, String cidr) {
-        if (cidr == null || cidr.isBlank()) {
-            return true;
-        }
-        if (ip == null || ip.isBlank()) {
-            return false;
-        }
-        String normalized = cidr.trim();
-        if (!normalized.contains("/")) {
-            return matchesText(ip, normalized);
-        }
-        String[] parts = normalized.split("/");
-        if (parts.length != 2) {
-            return false;
-        }
-        try {
-            byte[] ipBytes = InetAddress.getByName(ip).getAddress();
-            byte[] networkBytes = InetAddress.getByName(parts[0]).getAddress();
-            int prefixLength = Integer.parseInt(parts[1]);
-            if (ipBytes.length != networkBytes.length) {
-                return false;
-            }
-            int fullBytes = prefixLength / 8;
-            int remainingBits = prefixLength % 8;
-            for (int index = 0; index < fullBytes; index++) {
-                if (ipBytes[index] != networkBytes[index]) {
-                    return false;
-                }
-            }
-            if (remainingBits == 0) {
-                return true;
-            }
-            int mask = (-1) << (8 - remainingBits);
-            return (ipBytes[fullBytes] & mask) == (networkBytes[fullBytes] & mask);
-        } catch (UnknownHostException | NumberFormatException ex) {
-            return false;
-        }
     }
 
     private String resolveHierarchyLevel(String region, String building, String switchId) {

@@ -3,6 +3,7 @@ package com.campus.network.controller;
 import com.campus.network.service.AppIdentificationService;
 import com.campus.network.service.DashboardOverviewService;
 import com.campus.network.service.FlowAnalysisService;
+import com.campus.network.service.LatestDataTimeService;
 import com.campus.network.service.ThreatDetectionService;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -21,17 +22,20 @@ public class DashboardController {
     private final AppIdentificationService appIdentificationService;
     private final ThreatDetectionService threatDetectionService;
     private final DashboardOverviewService dashboardOverviewService;
+    private final LatestDataTimeService latestDataTimeService;
 
     public DashboardController(
             FlowAnalysisService flowAnalysisService,
             AppIdentificationService appIdentificationService,
             ThreatDetectionService threatDetectionService,
-            DashboardOverviewService dashboardOverviewService
+            DashboardOverviewService dashboardOverviewService,
+            LatestDataTimeService latestDataTimeService
     ) {
         this.flowAnalysisService = flowAnalysisService;
         this.appIdentificationService = appIdentificationService;
         this.threatDetectionService = threatDetectionService;
         this.dashboardOverviewService = dashboardOverviewService;
+        this.latestDataTimeService = latestDataTimeService;
     }
 
     @GetMapping("/overview")
@@ -57,7 +61,7 @@ public class DashboardController {
 
     @GetMapping("/metrics")
     public ResponseEntity<Map<String, Object>> getMetrics(@RequestParam(defaultValue = "-5") int minutesAgo) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -77,7 +81,7 @@ public class DashboardController {
             @RequestParam(defaultValue = "-5") int minutesAgo,
             @RequestParam(defaultValue = "bytes") String metric
     ) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -89,7 +93,7 @@ public class DashboardController {
 
     @GetMapping("/region-traffic")
     public ResponseEntity<Map<String, Object>> getRegionTraffic(@RequestParam(defaultValue = "-30") int minutesAgo) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -106,7 +110,7 @@ public class DashboardController {
             @RequestParam(required = false) String building,
             @RequestParam(required = false) String switchId
     ) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
         FlowAnalysisService.RegionHierarchySnapshot snapshot = flowAnalysisService.getRegionHierarchy(
                 startTime,
@@ -133,7 +137,7 @@ public class DashboardController {
             @RequestParam(defaultValue = "-60") int minutesAgo,
             @RequestParam(defaultValue = "5") int bucketMinutes
     ) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -153,7 +157,7 @@ public class DashboardController {
 
     @GetMapping("/threat-statistics")
     public ResponseEntity<Map<String, Object>> getThreatStatistics(@RequestParam(defaultValue = "-60") int minutesAgo) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
 
         Map<String, Object> response = new LinkedHashMap<>(threatDetectionService.getThreatStatistics(startTime, endTime));

@@ -15,7 +15,7 @@ const initialSearchParams = {
   startTime: '',
   endTime: '',
   minutesAgo: '-30',
-  size: '100'
+  size: '50'
 }
 
 const formatDecimal = (value) => Number(value || 0).toLocaleString(undefined, {

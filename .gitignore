@@ -47,6 +47,15 @@ wheels/
 .installed.cfg
 *.egg
 
+# Git Fix
+nul
+bad_file_nul
+docker-data/
+backend-run.*
+*.err
+*.out
+package-lock.json
+
 # Node
 node_modules/
 npm-debug.log

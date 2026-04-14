@@ -20,8 +20,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 500MB
-      max-request-size: 500MB
+      max-file-size: 5GB
+      max-request-size: 5GB
 
 server:
   port: ${SERVER_PORT:8080}
@@ -56,3 +56,5 @@ app:
     target-throughput-jitter-ratio: ${APP_DEMO_TARGET_THROUGHPUT_JITTER_RATIO:0.18}
     rebuild-check-interval-ms: ${APP_DEMO_REBUILD_CHECK_INTERVAL_MS:300000}
     rebuild-check-initial-delay-ms: ${APP_DEMO_REBUILD_CHECK_INITIAL_DELAY_MS:120000}
+  import:
+    root-path: ${APP_IMPORT_ROOT_PATH:}

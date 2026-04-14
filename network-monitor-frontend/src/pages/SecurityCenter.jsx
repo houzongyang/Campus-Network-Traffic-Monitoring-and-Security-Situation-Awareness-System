@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import 'echarts-gl'
+import axios from 'axios'
 import ChartCard from '../components/ChartCard'
 import MetricsCard from '../components/MetricsCard'
+import GlobeChart from '../components/GlobeChart'
 import { useSecurityStore } from '../store'
 import './SecurityCenter.css'
 
@@ -10,6 +13,8 @@ const severityOrder = ['low', 'medium', 'high', 'critical']
 const threatTypeOrder = ['DDoS', 'PortScan', 'SlowPortScan', 'WormPropagation', 'Phishing', 'DataExfiltration', 'ArpSpoofing']
 
 const FILTERS_STORAGE_KEY = 'network_monitor_security_filters_v1'
+
+const ROOT_PATH = 'https://echarts.apache.org/examples'
 
 const defaultFilters = {
   alertType: '',
@@ -142,6 +147,21 @@ function SecurityCenter() {
     }
   }
 
+  const [flights, setFlights] = useState(null)
+
+  useEffect(() => {
+    axios.get(`${ROOT_PATH}/data-gl/asset/data/flights.json`).then((res) => {
+      const { data } = res
+      function getAirportCoord(idx) {
+        return [data.airports[idx][3], data.airports[idx][4]]
+      }
+      const routes = data.routes.map((airline) => [getAirportCoord(airline[1]), getAirportCoord(airline[2])])
+      setFlights(routes)
+    }).catch(() => {
+      // 容错处理，如果获取失败则不显示背景航线
+    })
+  }, [])
+
   const typeEntries = useMemo(() => sortEntries(threatStats.byType || {}, threatTypeOrder), [threatStats.byType])
   const severityEntries = useMemo(() => sortEntries(threatStats.bySeverity || {}, severityOrder), [threatStats.bySeverity])
 
@@ -193,42 +213,6 @@ function SecurityCenter() {
       }
     ]
   }), [severityEntries])
-
-  const geoOption = useMemo(() => ({
-    animationDurationUpdate: 220,
-    animationEasingUpdate: 'linear',
-    tooltip: {
-      formatter: (params) => {
-        const meta = params.data.meta
-        return `${meta.city}<br/>${meta.alertType} / ${meta.severity}<br/>${meta.srcIp}<br/>(${formatDecimal(params.data.value[0])}, ${formatDecimal(params.data.value[1])})`
-      }
-    },
-    grid: { left: 18, right: 18, top: 32, bottom: 28, containLabel: true },
-    xAxis: {
-      type: 'value',
-      name: 'Longitude',
-      axisLabel: { ...chartTextStyle, formatter: (value) => formatDecimal(value) },
-      splitLine: { lineStyle: { color: 'rgba(122, 145, 200, 0.12)' } }
-    },
-    yAxis: {
-      type: 'value',
-      name: 'Latitude',
-      axisLabel: { ...chartTextStyle, formatter: (value) => formatDecimal(value) },
-      splitLine: { lineStyle: { color: 'rgba(122, 145, 200, 0.12)' } }
-    },
-    series: [
-      {
-        id: 'geo-scatter',
-        type: 'scatter',
-        symbolSize: (value) => value[2],
-        itemStyle: { color: '#4dd7ff', shadowBlur: 16, shadowColor: 'rgba(77, 215, 255, 0.35)' },
-        data: geoPoints.map((point) => ({
-          value: [point.longitude, point.latitude, severityWeight[point.severity] || 12],
-          meta: point
-        }))
-      }
-    ]
-  }), [geoPoints])
 
   return (
     <div className="page-layout">
@@ -322,7 +306,20 @@ function SecurityCenter() {
       <section className="charts-grid security-grid">
         <ChartCard title="威胁类型占比" subtitle="按告警类型统计。" option={typeOption} height={320} />
         <ChartCard title="严重级别分布" subtitle="帮助管理员快速判断优先级。" option={severityOption} height={320} />
-        <ChartCard title="攻击源地理散点" subtitle="用经纬度散点替代地图底图，保留空间分布能力。" option={geoOption} height={360} />
+        <ChartCard title="全球攻击态势" subtitle="3D 地球展示攻击源地理分布及攻击路径。">
+          <GlobeChart 
+            routes={flights || []} 
+            geoPoints={geoPoints || []}
+            theme="dark" 
+            height="440px" 
+            config={{
+              autoRotate: true,
+              distance: 200,
+              ambientIntensity: 0.5,
+              mainIntensity: 0.5
+            }}
+          />
+        </ChartCard>
       </section>
 
       <section className="table-card">

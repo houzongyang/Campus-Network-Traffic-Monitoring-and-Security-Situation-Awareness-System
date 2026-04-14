@@ -3,6 +3,7 @@ package com.campus.network.controller;
 import com.campus.network.model.NetworkFlow;
 import com.campus.network.repository.NetworkFlowRepository;
 import com.campus.network.service.FlowAnalysisService;
+import com.campus.network.service.LatestDataTimeService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -27,10 +28,16 @@ public class FlowSearchController {
 
     private final NetworkFlowRepository flowRepository;
     private final FlowAnalysisService flowAnalysisService;
+    private final LatestDataTimeService latestDataTimeService;
 
-    public FlowSearchController(NetworkFlowRepository flowRepository, FlowAnalysisService flowAnalysisService) {
+    public FlowSearchController(
+            NetworkFlowRepository flowRepository,
+            FlowAnalysisService flowAnalysisService,
+            LatestDataTimeService latestDataTimeService
+    ) {
         this.flowRepository = flowRepository;
         this.flowAnalysisService = flowAnalysisService;
+        this.latestDataTimeService = latestDataTimeService;
     }
 
     @PostMapping("/search")
@@ -50,7 +57,7 @@ public class FlowSearchController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size
     ) {
-        LocalDateTime resolvedEndTime = parseDateTimeOrDefault(endTime, LocalDateTime.now());
+        LocalDateTime resolvedEndTime = parseDateTimeOrDefault(endTime, latestDataTimeService.resolveWindowEnd());
         LocalDateTime resolvedStartTime = parseDateTimeOrDefault(
                 startTime,
                 resolvedEndTime.minusMinutes(Math.abs(minutesAgo))
@@ -107,7 +114,7 @@ public class FlowSearchController {
             @RequestParam(defaultValue = "-30") int minutesAgo,
             @RequestParam(defaultValue = "5000") int limit
     ) {
-        LocalDateTime resolvedEndTime = parseDateTimeOrDefault(endTime, LocalDateTime.now());
+        LocalDateTime resolvedEndTime = parseDateTimeOrDefault(endTime, latestDataTimeService.resolveWindowEnd());
         LocalDateTime resolvedStartTime = parseDateTimeOrDefault(
                 startTime,
                 resolvedEndTime.minusMinutes(Math.abs(minutesAgo))
@@ -167,7 +174,7 @@ public class FlowSearchController {
             @PathVariable String ip,
             @RequestParam(defaultValue = "-60") int minutesAgo
     ) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
 
         List<NetworkFlow> flows = flowRepository.findBySrcIpOrDstIpOrderByTimestampDesc(ip, ip).stream()
@@ -187,7 +194,7 @@ public class FlowSearchController {
             @PathVariable String ip,
             @RequestParam(defaultValue = "-60") int minutesAgo
     ) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
 
         Map<String, Object> response = new LinkedHashMap<>(flowAnalysisService.buildIpProfile(ip, startTime, endTime));

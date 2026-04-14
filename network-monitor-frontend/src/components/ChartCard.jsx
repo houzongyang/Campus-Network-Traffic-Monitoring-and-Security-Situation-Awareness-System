@@ -2,12 +2,12 @@ import { useEffect, useRef } from 'react'
 import * as echarts from 'echarts'
 import './ChartCard.css'
 
-function ChartCard({ title, subtitle, option, height = 320, onChartClick }) {
+function ChartCard({ title, subtitle, option, height = 320, onChartClick, children }) {
   const chartRef = useRef(null)
   const chartInstanceRef = useRef(null)
 
   useEffect(() => {
-    if (!chartRef.current) {
+    if (!chartRef.current || children) {
       return undefined
     }
 
@@ -60,7 +60,9 @@ function ChartCard({ title, subtitle, option, height = 320, onChartClick }) {
           {subtitle ? <p>{subtitle}</p> : null}
         </div>
       </div>
-      <div className="chart-surface" ref={chartRef} style={{ height }} />
+      <div className="chart-surface">
+        {children || <div ref={chartRef} style={{ height }} />}
+      </div>
     </section>
   )
 }

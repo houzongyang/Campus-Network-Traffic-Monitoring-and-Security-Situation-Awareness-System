@@ -19,7 +19,11 @@ public class DashboardMetricsWebSocketHandler extends TextWebSocketHandler {
     private static final Logger log = LoggerFactory.getLogger(DashboardMetricsWebSocketHandler.class);
 
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+
+    public DashboardMetricsWebSocketHandler(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {

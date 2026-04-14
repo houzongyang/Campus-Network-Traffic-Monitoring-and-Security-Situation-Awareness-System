@@ -17,13 +17,18 @@ public class DashboardOverviewService {
     }
 
     private final FlowAnalysisService flowAnalysisService;
+    private final LatestDataTimeService latestDataTimeService;
     private final AtomicReference<CacheEntry> cacheRef = new AtomicReference<>();
 
     @Value("${app.dashboard.overview-cache-ms:1000}")
     private long overviewCacheMillis;
 
-    public DashboardOverviewService(FlowAnalysisService flowAnalysisService) {
+    public DashboardOverviewService(
+            FlowAnalysisService flowAnalysisService,
+            LatestDataTimeService latestDataTimeService
+    ) {
         this.flowAnalysisService = flowAnalysisService;
+        this.latestDataTimeService = latestDataTimeService;
     }
 
     public Map<String, Object> getOverview(
@@ -52,7 +57,7 @@ public class DashboardOverviewService {
             return cached.payload();
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = latestDataTimeService.resolveWindowEnd();
 
         LocalDateTime metricsStart = now.minusMinutes(Math.abs(metricsMinutesAgo));
         LocalDateTime topStart = now.minusMinutes(Math.abs(topMinutesAgo));

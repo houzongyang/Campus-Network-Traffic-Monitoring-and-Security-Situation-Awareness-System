@@ -2,6 +2,7 @@ package com.campus.network.controller;
 
 import com.campus.network.model.SecurityAlert;
 import com.campus.network.repository.SecurityAlertRepository;
+import com.campus.network.service.LatestDataTimeService;
 import com.campus.network.service.ThreatDetectionService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -37,10 +38,16 @@ public class SecurityAlertsController {
 
     private final SecurityAlertRepository alertRepository;
     private final ThreatDetectionService threatDetectionService;
+    private final LatestDataTimeService latestDataTimeService;
 
-    public SecurityAlertsController(SecurityAlertRepository alertRepository, ThreatDetectionService threatDetectionService) {
+    public SecurityAlertsController(
+            SecurityAlertRepository alertRepository,
+            ThreatDetectionService threatDetectionService,
+            LatestDataTimeService latestDataTimeService
+    ) {
         this.alertRepository = alertRepository;
         this.threatDetectionService = threatDetectionService;
+        this.latestDataTimeService = latestDataTimeService;
     }
 
     @GetMapping("/alerts")
@@ -135,7 +142,7 @@ public class SecurityAlertsController {
 
     @GetMapping("/critical-alerts")
     public ResponseEntity<Map<String, Object>> getCriticalAlerts(@RequestParam(defaultValue = "-60") int minutesAgo) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
         List<SecurityAlert> alerts = alertRepository.findCriticalAlerts(startTime, endTime);
 
@@ -148,7 +155,7 @@ public class SecurityAlertsController {
 
     @GetMapping("/alert-statistics")
     public ResponseEntity<Map<String, Object>> getAlertStatistics(@RequestParam(defaultValue = "-60") int minutesAgo) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
         Map<String, Object> response = new LinkedHashMap<>(threatDetectionService.getThreatStatistics(startTime, endTime));
         response.put("status", "success");
@@ -157,7 +164,7 @@ public class SecurityAlertsController {
 
     @PostMapping("/run-detection")
     public ResponseEntity<Map<String, Object>> runThreatDetection(@RequestParam(defaultValue = "-60") int minutesAgo) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
         threatDetectionService.runFullThreatDetection(startTime, endTime);
 
@@ -169,7 +176,7 @@ public class SecurityAlertsController {
 
     @GetMapping("/geo-distribution")
     public ResponseEntity<Map<String, Object>> getGeoDistribution(@RequestParam(defaultValue = "-60") int minutesAgo) {
-        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime endTime = latestDataTimeService.resolveWindowEnd();
         LocalDateTime startTime = endTime.minusMinutes(Math.abs(minutesAgo));
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -192,7 +199,7 @@ public class SecurityAlertsController {
             int page,
             int size
     ) {
-        LocalDateTime resolvedEndTime = parseDateTimeOrDefault(endTime, LocalDateTime.now());
+        LocalDateTime resolvedEndTime = parseDateTimeOrDefault(endTime, latestDataTimeService.resolveWindowEnd());
         LocalDateTime resolvedStartTime = parseDateTimeOrDefault(
                 startTime,
                 resolvedEndTime.minusMinutes(Math.abs(minutesAgo))
