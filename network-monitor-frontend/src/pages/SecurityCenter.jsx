@@ -306,7 +306,7 @@ function SecurityCenter() {
       <section className="charts-grid security-grid">
         <ChartCard title="威胁类型占比" subtitle="按告警类型统计。" option={typeOption} height={320} />
         <ChartCard title="严重级别分布" subtitle="帮助管理员快速判断优先级。" option={severityOption} height={320} />
-        <ChartCard title="全球攻击态势" subtitle="3D 地球展示攻击源地理分布及攻击路径。">
+        <ChartCard title="全球攻击态势" subtitle="3D 地球展示攻击源地理分布及攻击路径。地图审图号：GS(2021)648号，来源：高德地图。">
           <GlobeChart 
             routes={flights || []} 
             geoPoints={geoPoints || []}

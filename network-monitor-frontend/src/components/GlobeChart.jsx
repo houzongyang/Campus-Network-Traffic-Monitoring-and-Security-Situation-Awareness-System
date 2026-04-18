@@ -110,6 +110,17 @@ const GlobeChart = ({
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
   const ROOT_PATH = 'https://echarts.apache.org/examples';
+  
+  // 地图数据来源说明
+  // 审图号：GS(2021)648号（高德地图）
+  // 数据提供方：高德软件有限公司
+  const MAP_ATTRIBUTION = {
+    source: '高德地图 / ECharts 官方示例数据',
+    url: 'https://echarts.apache.org/examples/data/asset/geo/world.json',
+    approvalNumber: 'GS(2021)648号',
+    provider: '高德软件有限公司',
+    note: '世界地图数据仅供安全态势可视化展示使用'
+  };
 
   const severityWeight = { low: 12, medium: 18, high: 26, critical: 34 };
   const campusCoord = [116.4074, 39.9042];
@@ -196,6 +207,16 @@ const GlobeChart = ({
 
     const option = {
       backgroundColor: theme === 'dark' ? 'transparent' : '#fff',
+      title: {
+        text: '',
+        subtext: '地图审图号：GS(2021)648号 | 来源：高德地图',
+        left: 'center',
+        bottom: 0,
+        subtextStyle: {
+          color: theme === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+          fontSize: 10
+        }
+      },
       globe: {
         baseTexture: globeCanvas,
         shading: 'color', 
