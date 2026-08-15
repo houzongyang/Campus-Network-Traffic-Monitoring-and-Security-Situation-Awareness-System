@@ -1,0 +1,193 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - paragraph [ref=e6]: Smart Campus Network Intelligence
+      - heading "面向智慧校园的细粒度网络流量监控与安全态势感知系统" [level=1] [ref=e7]
+    - navigation [ref=e8]:
+      - button "全景画像" [ref=e9] [cursor=pointer]
+      - button "安全态势" [ref=e10] [cursor=pointer]
+      - button "微观流检索" [ref=e11] [cursor=pointer]
+      - button "单 IP 详情" [disabled] [ref=e12]
+  - main [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - paragraph [ref=e17]: Campus-wide Overview
+          - heading "实时全景画像" [level=2] [ref=e18]
+          - paragraph [ref=e19]: 核心指标使用 WebSocket 秒级推送，趋势与大流按周期增量刷新，支持区域多层级下钻。
+        - generic [ref=e20]:
+          - generic [ref=e21]:
+            - generic [ref=e22]: 已连接
+            - generic [ref=e23]: 重连次数 0.00
+          - generic [ref=e24]:
+            - button "字节视图" [ref=e25] [cursor=pointer]
+            - button "包数视图" [ref=e26] [cursor=pointer]
+          - generic [ref=e27]:
+            - checkbox "自动刷新" [checked] [ref=e28]
+            - generic [ref=e29]: 自动刷新
+          - button "立即刷新" [ref=e30] [cursor=pointer]
+      - generic [ref=e31]:
+        - article [ref=e32]:
+          - paragraph [ref=e33]: 实时吞吐量
+          - generic [ref=e34]:
+            - generic [ref=e35]: 3,508.28
+            - generic [ref=e36]: Mbps
+          - paragraph [ref=e37]: 校园出口秒级吞吐
+        - article [ref=e38]:
+          - paragraph [ref=e39]: 包速率
+          - generic [ref=e40]:
+            - generic [ref=e41]: 386,596.20
+            - generic [ref=e42]: PPS
+          - paragraph [ref=e43]: 支持 Bytes / Packets 双维观测
+        - article [ref=e44]:
+          - paragraph [ref=e45]: 活跃 IP 数
+          - generic [ref=e46]:
+            - generic [ref=e47]: 1,523.00
+            - generic [ref=e48]: 个
+          - paragraph [ref=e49]: 全网双向通信去重统计
+        - article [ref=e50]:
+          - paragraph [ref=e51]: 监控状态
+          - generic [ref=e53]: 稳定
+          - paragraph [ref=e54]: 更新时间 09:28:53
+      - generic [ref=e55]:
+        - generic [ref=e58]:
+          - heading "链路吞吐变化" [level=3] [ref=e59]
+          - paragraph [ref=e60]: 同时展示 Mbps 与 PPS，适合识别微突发与异常尖峰。
+        - generic [ref=e66]:
+          - heading "应用协议分布" [level=3] [ref=e67]
+          - paragraph [ref=e68]: 按字节量统计业务构成。
+        - generic [ref=e74]:
+          - heading "区域 / 楼宇透视（区域层）" [level=3] [ref=e75]
+          - paragraph [ref=e76]: 点击柱条可下钻到下一层。
+        - generic [ref=e82]:
+          - heading "区域热力图" [level=3] [ref=e83]
+          - paragraph [ref=e84]: 按流量显示区域热度分布。
+      - generic [ref=e88]:
+        - button "返回上一级" [disabled] [ref=e89]
+        - generic [ref=e90]: 当前为根层级：全区域
+      - generic [ref=e91]:
+        - generic [ref=e93]:
+          - heading "Top-K 大流监控" [level=3] [ref=e94]
+          - paragraph [ref=e95]: 支持从宏观异常点下钻到单 IP 详情页面。
+        - table [ref=e97]:
+          - rowgroup [ref=e98]:
+            - row "源 IP 目的 IP 端口 应用协议 区域 总字节数 总包数 持续时间(s)" [ref=e99]:
+              - columnheader "源 IP" [ref=e100]
+              - columnheader "目的 IP" [ref=e101]
+              - columnheader "端口" [ref=e102]
+              - columnheader "应用协议" [ref=e103]
+              - columnheader "区域" [ref=e104]
+              - columnheader "总字节数" [ref=e105]
+              - columnheader "总包数" [ref=e106]
+              - columnheader "持续时间(s)" [ref=e107]
+          - rowgroup [ref=e108]:
+            - row "10.10.50.14 203.0.113.20 42100 → 465 SMTPS library 987.36 MB 942,056.00 42.00" [ref=e115]:
+              - cell "10.10.50.14" [ref=e116]:
+                - button "10.10.50.14" [ref=e117] [cursor=pointer]
+              - cell "203.0.113.20" [ref=e118]:
+                - button "203.0.113.20" [ref=e119] [cursor=pointer]
+              - cell "42100 → 465" [ref=e120]
+              - cell "SMTPS" [ref=e121]
+              - cell "library" [ref=e122]
+              - cell "987.36 MB" [ref=e123]
+              - cell "942,056.00" [ref=e124]
+              - cell "42.00" [ref=e125]
+            - row "34.117.59.81 10.10.50.12 37485 → 123 NTP library 978.75 MB 748,576.00 8.00" [ref=e126]:
+              - cell "34.117.59.81" [ref=e127]:
+                - button "34.117.59.81" [ref=e128] [cursor=pointer]
+              - cell "10.10.50.12" [ref=e129]:
+                - button "10.10.50.12" [ref=e130] [cursor=pointer]
+              - cell "37485 → 123" [ref=e131]
+              - cell "NTP" [ref=e132]
+              - cell "library" [ref=e133]
+              - cell "978.75 MB" [ref=e134]
+              - cell "748,576.00" [ref=e135]
+              - cell "8.00" [ref=e136]
+            - row "10.10.50.14 10.10.20.12 21061 → 8443 HTTPS-Alt library 969.58 MB 821,886.00 24.00" [ref=e137]:
+              - cell "10.10.50.14" [ref=e138]:
+                - button "10.10.50.14" [ref=e139] [cursor=pointer]
+              - cell "10.10.20.12" [ref=e140]:
+                - button "10.10.20.12" [ref=e141] [cursor=pointer]
+              - cell "21061 → 8443" [ref=e142]
+              - cell "HTTPS-Alt" [ref=e143]
+              - cell "library" [ref=e144]
+              - cell "969.58 MB" [ref=e145]
+              - cell "821,886.00" [ref=e146]
+              - cell "24.00" [ref=e147]
+            - row "10.10.50.11 10.10.40.13 33984 → 8443 HTTPS-Alt library 966.88 MB 939,618.00 15.00" [ref=e148]:
+              - cell "10.10.50.11" [ref=e149]:
+                - button "10.10.50.11" [ref=e150] [cursor=pointer]
+              - cell "10.10.40.13" [ref=e151]:
+                - button "10.10.40.13" [ref=e152] [cursor=pointer]
+              - cell "33984 → 8443" [ref=e153]
+              - cell "HTTPS-Alt" [ref=e154]
+              - cell "library" [ref=e155]
+              - cell "966.88 MB" [ref=e156]
+              - cell "939,618.00" [ref=e157]
+              - cell "15.00" [ref=e158]
+            - row "203.0.113.20 10.10.20.13 54325 → 995 POP3S dormitory_b 949.83 MB 786,082.00 21.00" [ref=e159]:
+              - cell "203.0.113.20" [ref=e160]:
+                - button "203.0.113.20" [ref=e161] [cursor=pointer]
+              - cell "10.10.20.13" [ref=e162]:
+                - button "10.10.20.13" [ref=e163] [cursor=pointer]
+              - cell "54325 → 995" [ref=e164]
+              - cell "POP3S" [ref=e165]
+              - cell "dormitory_b" [ref=e166]
+              - cell "949.83 MB" [ref=e167]
+              - cell "786,082.00" [ref=e168]
+              - cell "21.00" [ref=e169]
+            - row "10.10.50.12 10.10.40.13 59146 → 443 HTTPS library 948.67 MB 788,856.00 13.00" [ref=e170]:
+              - cell "10.10.50.12" [ref=e171]:
+                - button "10.10.50.12" [ref=e172] [cursor=pointer]
+              - cell "10.10.40.13" [ref=e173]:
+                - button "10.10.40.13" [ref=e174] [cursor=pointer]
+              - cell "59146 → 443" [ref=e175]
+              - cell "HTTPS" [ref=e176]
+              - cell "library" [ref=e177]
+              - cell "948.67 MB" [ref=e178]
+              - cell "788,856.00" [ref=e179]
+              - cell "13.00" [ref=e180]
+            - row "10.10.50.13 10.10.40.13 24334 → 53 DNS library 948.25 MB 830,670.00 32.00" [ref=e181]:
+              - cell "10.10.50.13" [ref=e182]:
+                - button "10.10.50.13" [ref=e183] [cursor=pointer]
+              - cell "10.10.40.13" [ref=e184]:
+                - button "10.10.40.13" [ref=e185] [cursor=pointer]
+              - cell "24334 → 53" [ref=e186]
+              - cell "DNS" [ref=e187]
+              - cell "library" [ref=e188]
+              - cell "948.25 MB" [ref=e189]
+              - cell "830,670.00" [ref=e190]
+              - cell "32.00" [ref=e191]
+            - row "10.10.10.13 10.10.20.14 21853 → 445 SMB dormitory_a 940.99 MB 823,622.00 24.00" [ref=e192]:
+              - cell "10.10.10.13" [ref=e193]:
+                - button "10.10.10.13" [ref=e194] [cursor=pointer]
+              - cell "10.10.20.14" [ref=e195]:
+                - button "10.10.20.14" [ref=e196] [cursor=pointer]
+              - cell "21853 → 445" [ref=e197]
+              - cell "SMB" [ref=e198]
+              - cell "dormitory_a" [ref=e199]
+              - cell "940.99 MB" [ref=e200]
+              - cell "823,622.00" [ref=e201]
+              - cell "24.00" [ref=e202]
+            - row "91.240.118.8 10.10.30.12 25189 → 5432 PostgreSQL teaching_zone 912.94 MB 888,018.00 36.00" [ref=e203]:
+              - cell "91.240.118.8" [ref=e204]:
+                - button "91.240.118.8" [ref=e205] [cursor=pointer]
+              - cell "10.10.30.12" [ref=e206]:
+                - button "10.10.30.12" [ref=e207] [cursor=pointer]
+              - cell "25189 → 5432" [ref=e208]
+              - cell "PostgreSQL" [ref=e209]
+              - cell "teaching_zone" [ref=e210]
+              - cell "912.94 MB" [ref=e211]
+              - cell "888,018.00" [ref=e212]
+              - cell "36.00" [ref=e213]
+            - row "34.117.59.81 10.10.20.15 47394 → 445 SMB dormitory_b 911.98 MB 1,021,666.00 3.00" [ref=e214]:
+              - cell "34.117.59.81" [ref=e215]:
+                - button "34.117.59.81" [ref=e216] [cursor=pointer]
+              - cell "10.10.20.15" [ref=e217]:
+                - button "10.10.20.15" [ref=e218] [cursor=pointer]
+              - cell "47394 → 445" [ref=e219]
+              - cell "SMB" [ref=e220]
+              - cell "dormitory_b" [ref=e221]
+              - cell "911.98 MB" [ref=e222]
+              - cell "1,021,666.00" [ref=e223]
+              - cell "3.00" [ref=e224]

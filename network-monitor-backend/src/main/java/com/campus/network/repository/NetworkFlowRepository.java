@@ -26,6 +26,8 @@ public interface NetworkFlowRepository extends JpaRepository<NetworkFlow, Long> 
 
     Page<NetworkFlow> findByTimestampBetweenOrderByTimestampDesc(LocalDateTime startTime, LocalDateTime endTime, Pageable pageable);
 
+    long countByTimestampBetween(LocalDateTime startTime, LocalDateTime endTime);
+
     @Query(
             "SELECT COALESCE(SUM(nf.bytesSent + nf.bytesRecv), 0) "
                     + "FROM NetworkFlow nf WHERE nf.timestamp BETWEEN :startTime AND :endTime"

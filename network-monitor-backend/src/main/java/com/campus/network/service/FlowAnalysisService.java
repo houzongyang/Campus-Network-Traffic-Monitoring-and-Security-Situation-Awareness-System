@@ -61,6 +61,10 @@ public class FlowAnalysisService {
         return flowRepository.countDistinctActiveIpsBetween(startTime, endTime);
     }
 
+    public long countFlows(LocalDateTime startTime, LocalDateTime endTime) {
+        return flowRepository.countByTimestampBetween(startTime, endTime);
+    }
+
     public Map<String, Long> getAppProtocolDistribution(LocalDateTime startTime, LocalDateTime endTime, String metric) {
         List<Object[]> rows = "packets".equalsIgnoreCase(metric)
                 ? flowRepository.aggregateAppPacketsBetween(startTime, endTime, 12)

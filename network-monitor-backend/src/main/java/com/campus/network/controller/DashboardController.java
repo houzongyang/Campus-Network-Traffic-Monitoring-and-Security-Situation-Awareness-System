@@ -5,8 +5,10 @@ import com.campus.network.service.DashboardOverviewService;
 import com.campus.network.service.FlowAnalysisService;
 import com.campus.network.service.LatestDataTimeService;
 import com.campus.network.service.ThreatDetectionService;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -165,6 +167,57 @@ public class DashboardController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/period-analysis")
+    public ResponseEntity<Map<String, Object>> getPeriodAnalysis(
+            @RequestParam(required = false) LocalDateTime start,
+            @RequestParam(required = false) LocalDateTime end,
+            @RequestParam(defaultValue = "-60") int minutesAgo,
+            @RequestParam(defaultValue = "10") int bucketMinutes
+    ) {
+        LocalDateTime endTime = end != null ? end : latestDataTimeService.resolveWindowEnd();
+        LocalDateTime startTime = start != null ? start : endTime.minusMinutes(Math.abs(minutesAgo));
+        if (!startTime.isBefore(endTime)) {
+            startTime = endTime.minusMinutes(Math.abs(minutesAgo));
+        }
+        int normalizedBucketMinutes = Math.max(1, bucketMinutes);
+
+        long flowCount = flowAnalysisService.countFlows(startTime, endTime);
+        double throughputMbps = flowAnalysisService.calculateThroughputMbps(startTime, endTime);
+        double pps = flowAnalysisService.calculatePps(startTime, endTime);
+        long activeIps = flowAnalysisService.countActiveIps(startTime, endTime);
+        Map<String, Object> threatStats = threatDetectionService.getThreatStatistics(startTime, endTime);
+        List<Map<String, Object>> trend = flowAnalysisService.getThroughputTrend(startTime, endTime, normalizedBucketMinutes);
+
+        Map<String, Object> metrics = new LinkedHashMap<>();
+        metrics.put("flowCount", flowCount);
+        metrics.put("throughputMbps", round(throughputMbps));
+        metrics.put("pps", round(pps));
+        metrics.put("activeIps", activeIps);
+        metrics.put("totalAlerts", threatStats.getOrDefault("totalAlerts", 0L));
+        metrics.put("criticalAlerts", mapLongValue(threatStats.get("bySeverity"), "critical"));
+        metrics.put("highAlerts", mapLongValue(threatStats.get("bySeverity"), "high"));
+
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("durationMinutes", Math.max(1L, Duration.between(startTime, endTime).toMinutes()));
+        summary.put("avgBytesPerFlow", flowCount > 0
+                ? Math.round((throughputMbps * 1_000_000D / 8D) * Duration.between(startTime, endTime).toSeconds() / flowCount)
+                : 0L);
+        summary.put("topProtocolByBytes", topEntry(flowAnalysisService.getAppProtocolDistribution(startTime, endTime, "bytes")));
+        summary.put("topAlertType", topEntryFromObject(threatStats.get("byType")));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("status", "success");
+        response.put("window", Map.of("start", startTime, "end", endTime));
+        response.put("bucketMinutes", normalizedBucketMinutes);
+        response.put("metrics", metrics);
+        response.put("summary", summary);
+        response.put("trend", trend);
+        response.put("alertTimeline", threatStats.getOrDefault("timeline", List.of()));
+        response.put("alertSeverity", threatStats.getOrDefault("bySeverity", Map.of()));
+        response.put("alertTypes", threatStats.getOrDefault("byType", Map.of()));
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> response = new LinkedHashMap<>();
@@ -175,5 +228,37 @@ public class DashboardController {
 
     private double round(double value) {
         return Math.round(value * 100.0D) / 100.0D;
+    }
+
+    private Map<String, Object> topEntry(Map<String, Long> values) {
+        return values.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(entry -> Map.<String, Object>of("name", entry.getKey(), "value", entry.getValue()))
+                .orElse(Map.of("name", "-", "value", 0L));
+    }
+
+    private long mapLongValue(Object source, String key) {
+        if (!(source instanceof Map<?, ?> values)) {
+            return 0L;
+        }
+        Object value = values.get(key);
+        return value instanceof Number number ? number.longValue() : 0L;
+    }
+
+    private Map<String, Object> topEntryFromObject(Object source) {
+        if (!(source instanceof Map<?, ?> values) || values.isEmpty()) {
+            return Map.of("name", "-", "value", 0L);
+        }
+        return values.entrySet().stream()
+                .filter(entry -> entry.getValue() instanceof Number)
+                .max((left, right) -> Long.compare(
+                        ((Number) left.getValue()).longValue(),
+                        ((Number) right.getValue()).longValue()
+                ))
+                .map(entry -> Map.<String, Object>of(
+                        "name", String.valueOf(entry.getKey()),
+                        "value", ((Number) entry.getValue()).longValue()
+                ))
+                .orElse(Map.of("name", "-", "value", 0L));
     }
 }

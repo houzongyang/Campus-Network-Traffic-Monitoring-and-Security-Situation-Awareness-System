@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <dc:title>面向智慧校园的细粒度网络流量监控与安全态势感知系统</dc:title>
+  <dc:creator>苏州大学 无敌暴龙战队</dc:creator>
+  <dc:subject>计算机设计大赛答辩演示</dc:subject>
+  <cp:lastModifiedBy>侯宗阳</cp:lastModifiedBy>
+  <cp:revision>2</cp:revision>
+  <dcterms:created xsi:type="dcterms:W3CDTF">2026-04-18T09:22:00Z</dcterms:created>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">2026-04-18T11:31:37Z</dcterms:modified>
+</cp:coreProperties>

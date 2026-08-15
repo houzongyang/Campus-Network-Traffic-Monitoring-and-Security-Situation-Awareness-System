@@ -1,9 +1,9 @@
 package com.campus.network.controller;
 
-import com.campus.network.service.BehaviorFingerprintService;
-import com.campus.network.service.EwmaEntropyAnomalyDetectionService;
-import com.campus.network.service.TemporalPredictiveAlertService;
-import com.campus.network.service.ThreatCorrelationEngineService;
+import com.campus.network.algorithm.BehaviorFingerprintService;
+import com.campus.network.algorithm.EwmaEntropyAnomalyDetectionService;
+import com.campus.network.algorithm.TemporalPredictiveAlertService;
+import com.campus.network.algorithm.ThreatCorrelationEngineService;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;

@@ -388,7 +388,12 @@ function Dashboard() {
       </section>
 
       <section className="charts-grid">
-        <ChartCard title="链路吞吐变化" subtitle="同时展示 Mbps 与 PPS，适合识别微突发与异常尖峰。" option={throughputOption} height={320} />
+        <ChartCard
+          title="链路吞吐变化"
+          subtitle="同时展示 Mbps 与 PPS，适合识别微突发与异常尖峰。"
+          option={throughputOption}
+          height={340}
+        />
         <ChartCard
           title="应用协议分布"
           subtitle={metricMode === 'packets' ? '按包数统计业务构成。' : '按字节量统计业务构成。'}

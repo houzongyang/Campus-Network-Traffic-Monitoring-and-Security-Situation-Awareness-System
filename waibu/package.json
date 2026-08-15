@@ -1,0 +1,30 @@
+{
+  "dependencies": {
+    "docx": "^9.6.1",
+    "playwright": "^1.59.1",
+    "pptxgenjs": "^4.0.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-icons": "^5.6.0",
+    "sharp": "^0.34.5"
+  },
+  "name": "waibao",
+  "version": "1.0.0",
+  "description": "这是一个企业级的网络流量监控和安全态势感知系统，针对高校校园网的复杂运维需求而设计。系统支持秒级流量监控、多维度可视化分析、实时安全威胁检测和微观流级检索。",
+  "main": "fix_world.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/houzongyang/waibao.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/houzongyang/waibao/issues"
+  },
+  "homepage": "https://github.com/houzongyang/waibao#readme"
+}

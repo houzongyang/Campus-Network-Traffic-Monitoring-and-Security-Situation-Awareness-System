@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import * as echarts from 'echarts'
 import './ChartCard.css'
 
-function ChartCard({ title, subtitle, option, height = 320, onChartClick, children }) {
+function ChartCard({ title, subtitle, option, height = 320, onChartClick, onChartDataZoom, footer, children }) {
   const chartRef = useRef(null)
   const chartInstanceRef = useRef(null)
 
@@ -52,6 +52,20 @@ function ChartCard({ title, subtitle, option, height = 320, onChartClick, childr
     }
   }, [onChartClick])
 
+  useEffect(() => {
+    if (!chartInstanceRef.current) {
+      return
+    }
+    const chart = chartInstanceRef.current
+    chart.off('datazoom')
+    if (typeof onChartDataZoom === 'function') {
+      chart.on('datazoom', onChartDataZoom)
+    }
+    return () => {
+      chart.off('datazoom')
+    }
+  }, [onChartDataZoom])
+
   return (
     <section className="chart-card">
       <div className="chart-card-head">
@@ -63,6 +77,7 @@ function ChartCard({ title, subtitle, option, height = 320, onChartClick, childr
       <div className="chart-surface">
         {children || <div ref={chartRef} style={{ height }} />}
       </div>
+      {footer ? <div className="chart-card-footer">{footer}</div> : null}
     </section>
   )
 }

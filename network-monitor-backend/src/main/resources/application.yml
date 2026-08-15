@@ -3,9 +3,11 @@ spring:
     name: network-monitor
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/network_monitor}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    # 本地启动请通过环境变量提供数据库连接信息，不要把真实密码写入配置文件。
+    # 若使用根目录 docker-compose 启动 PostgreSQL，默认宿主机端口为 55432。
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:${POSTGRES_HOST_PORT:55432}/network_monitor}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:}}
     driver-class-name: org.postgresql.Driver
 
   jpa:

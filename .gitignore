@@ -103,6 +103,7 @@ docker-compose.override.yml
 # Misc
 .gradle/
 .m2/
-*.pem
+*.pcap
+*.pcapng
 *.key
 *.crt

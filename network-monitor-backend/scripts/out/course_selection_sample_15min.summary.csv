@@ -1,0 +1,16 @@
+minute,scenario,multiplier,packets,bytes_total,anomaly_note
+2026-05-20T08:00:00,course_selection_week,0.8768,34,23380,commute_peak_wobble
+2026-05-20T08:01:00,course_selection_week,1.1598,35,23897,commute_peak_wobble
+2026-05-20T08:02:00,course_selection_week,1.0258,35,27106,commute_peak_wobble
+2026-05-20T08:03:00,course_selection_week,0.8397,31,19892,commute_peak_wobble
+2026-05-20T08:04:00,course_selection_week,0.8942,33,24706,commute_peak_wobble
+2026-05-20T08:05:00,course_selection_week,1.1035,51,36611,commute_peak_wobble
+2026-05-20T08:06:00,course_selection_week,0.8882,33,24576,commute_peak_wobble
+2026-05-20T08:07:00,course_selection_week,0.8461,39,30622,commute_peak_wobble
+2026-05-20T08:08:00,course_selection_week,0.9373,25,18570,commute_peak_wobble
+2026-05-20T08:09:00,course_selection_week,1.1120,38,27965,commute_peak_wobble
+2026-05-20T08:10:00,course_selection_week,0.9505,29,19588,commute_peak_wobble
+2026-05-20T08:11:00,course_selection_week,1.0673,37,27624,commute_peak_wobble
+2026-05-20T08:12:00,course_selection_week,1.0879,35,19316,commute_peak_wobble
+2026-05-20T08:13:00,course_selection_week,1.2018,43,32552,commute_peak_wobble
+2026-05-20T08:14:00,course_selection_week,1.0460,50,36058,commute_peak_wobble

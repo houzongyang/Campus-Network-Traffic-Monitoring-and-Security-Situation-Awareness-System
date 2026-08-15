@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920,height=1080">
+  <title>实时全景大屏 - 截图版</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      font-family: 'Microsoft YaHei', 'PingFang SC', 'Segoe UI', sans-serif;
+      background: #060d1a;
+      color: #e7ecff;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* === HEADER === */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 40px;
+      background: linear-gradient(180deg, rgba(10,20,45,0.98) 0%, rgba(6,13,26,0.95) 100%);
+      border-bottom: 1px solid rgba(93,214,255,0.15);
+      flex-shrink: 0;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .header-logo {
+      width: 42px;
+      height: 42px;
+    }
+    .header-title {
+      font-size: 26px;
+      font-weight: 700;
+      background: linear-gradient(90deg, #5dd6ff, #9e8cff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+    .header-sub {
+      font-size: 13px;
+      color: #4a6080;
+      margin-top: 2px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .ws-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      background: rgba(89,212,124,0.12);
+      border: 1px solid rgba(89,212,124,0.35);
+      border-radius: 20px;
+      font-size: 14px;
+      color: #59d47c;
+    }
+    .ws-dot {
+      width: 9px;
+      height: 9px;
+      background: #59d47c;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; box-shadow: 0 0 6px #59d47c; }
+      50% { opacity:0.5; box-shadow: 0 0 12px #59d47c; }
+    }
+    .toggle-btns {
+      display: flex;
+      background: rgba(15,42,74,0.8);
+      border-radius: 8px;
+      border: 1px solid rgba(93,214,255,0.2);
+      overflow: hidden;
+    }
+    .toggle-btns button {
+      padding: 8px 20px;
+      background: transparent;
+      border: none;
+      color: #4a6080;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .toggle-btns button.active {
+      background: linear-gradient(135deg, #5dd6ff, #3a9fd4);
+      color: #000;
+      font-weight: 700;
+    }
+    .clock {
+      font-size: 20px;
+      font-weight: 600;
+      color: #5dd6ff;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 2px;
+    }
+
+    /* === MAIN CONTENT === */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 32px;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    /* === METRICS === */
+    .metrics-row {
+      display: flex;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .mcard {
+      flex: 1;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, rgba(12,28,58,0.95) 0%, rgba(6,15,32,0.92) 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(100,140,220,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .mcard::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 12px 12px 0 0;
+    }
+    .mcard.teal::before { background: linear-gradient(90deg,#5dd6ff,transparent); }
+    .mcard.amber::before { background: linear-gradient(90deg,#ffb454,transparent); }
+    .mcard.violet::before { background: linear-gradient(90deg,#9e8cff,transparent); }
+    .mcard.green::before { background: linear-gradient(90deg,#59d47c,transparent); }
+
+    .mcard-label {
+      font-size: 14px;
+      color: #4a6080;
+      margin-bottom: 10px;
+    }
+    .mcard-value {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .mcard-num {
+      font-size: 36px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+    .teal .mcard-num { color: #5dd6ff; }
+    .amber .mcard-num { color: #ffb454; }
+    .violet .mcard-num { color: #9e8cff; }
+    .green .mcard-num { color: #59d47c; }
+    .mcard-unit {
+      font-size: 16px;
+      color: #4a6080;
+    }
+    .mcard-note {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #3a5070;
+    }
+    .live-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 10px;
+      padding: 2px 8px;
+      background: rgba(89,212,124,0.15);
+      border-radius: 10px;
+      font-size: 11px;
+      color: #59d47c;
+    }
+    .live-tag::before {
+      content: '';
+      width: 5px; height: 5px;
+      background: #59d47c;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    /* === CHARTS === */
+    .charts-row {
+      display: flex;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+    .chart-card {
+      flex: 1;
+      background: linear-gradient(135deg, rgba(12,28,58,0.95) 0%, rgba(6,15,32,0.92) 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(100,140,220,0.15);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-card.tall {
+      flex: 1.4;
+    }
+    .chart-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #c8d8f0;
+      margin-bottom: 4px;
+    }
+    .chart-sub {
+      font-size: 11px;
+      color: #3a5070;
+      margin-bottom: 10px;
+    }
+    .chart-body {
+      flex: 1;
+      min-height: 0;
+    }
+    .chart-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      background: rgba(93,214,255,0.12);
+      border: 1px solid rgba(93,214,255,0.25);
+      border-radius: 12px;
+      font-size: 11px;
+      color: #5dd6ff;
+      margin-bottom: 8px;
+    }
+
+    /* === BOTTOM === */
+    .bottom-row {
+      display: flex;
+      gap: 16px;
+      height: 200px;
+      flex-shrink: 0;
+    }
+    .flow-panel {
+      flex: 2.2;
+      background: linear-gradient(135deg, rgba(12,28,58,0.95) 0%, rgba(6,15,32,0.92) 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(100,140,220,0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 12px 20px;
+      background: rgba(10,22,48,0.8);
+      border-bottom: 1px solid rgba(100,140,220,0.1);
+      font-size: 14px;
+      font-weight: 600;
+      color: #c8d8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .panel-sub {
+      font-size: 11px;
+      color: #3a5070;
+      font-weight: 400;
+    }
+    .flow-table {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .flow-thead {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      padding: 8px 20px;
+      background: rgba(15,42,74,0.4);
+      font-size: 11px;
+      color: #4a6080;
+      font-weight: 600;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+    .flow-tbody {
+      flex: 1;
+      overflow: hidden;
+    }
+    .flow-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      padding: 7px 20px;
+      border-bottom: 1px solid rgba(100,140,220,0.07);
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+    .flow-row:hover { background: rgba(93,214,255,0.05); }
+    .flow-rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      margin-right: 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      background: rgba(93,214,255,0.15);
+      color: #5dd6ff;
+    }
+    .flow-rank.gold {
+      background: linear-gradient(135deg,#ffb454,#ff8c00);
+      color: #000;
+      font-weight: 700;
+    }
+    .flow-ip { color: #5dd6ff; font-family: 'Consolas','Courier New',monospace; font-size: 11px; }
+    .flow-bytes { color: #ffb454; font-weight: 600; }
+    .flow-pkts { color: #9e8cff; }
+    .flow-proto { color: #59d47c; font-size: 11px; }
+    .flow-duration { color: #4a6080; font-size: 11px; }
+
+    /* Status panel */
+    .status-panel {
+      flex: 1;
+      background: linear-gradient(135deg, rgba(12,28,58,0.95) 0%, rgba(6,15,32,0.92) 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(100,140,220,0.15);
+      display: flex;
+      flex-direction: column;
+    }
+    .status-body {
+      flex: 1;
+      padding: 10px 0;
+      overflow: hidden;
+    }
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 20px;
+      font-size: 12px;
+    }
+    .status-lbl { color: #4a6080; }
+    .status-val { font-weight: 600; }
+    .status-val.ok { color: #59d47c; }
+    .status-val.warn { color: #ffb454; }
+
+    /* Footer */
+    .footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      padding: 10px;
+      background: rgba(6,13,26,0.8);
+      border-top: 1px solid rgba(100,140,220,0.1);
+      flex-shrink: 0;
+    }
+    .footer-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #3a5070;
+    }
+    .footer-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .footer-dot.g { background: #59d47c; }
+    .footer-dot.b { background: #5dd6ff; }
+    .footer-dot.y { background: #ffb454; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <svg class="header-logo" viewBox="0 0 42 42" fill="none">
+      <circle cx="21" cy="21" r="19" stroke="url(#lg)" stroke-width="2"/>
+      <circle cx="21" cy="21" r="11" stroke="url(#lg)" stroke-width="1.5" opacity="0.5"/>
+      <circle cx="21" cy="21" r="4" fill="#5dd6ff"/>
+      <line x1="21" y1="2" x2="21" y2="8" stroke="#5dd6ff" stroke-width="1.5" opacity="0.6"/>
+      <line x1="21" y1="34" x2="21" y2="40" stroke="#5dd6ff" stroke-width="1.5" opacity="0.6"/>
+      <line x1="2" y1="21" x2="8" y2="21" stroke="#5dd6ff" stroke-width="1.5" opacity="0.6"/>
+      <line x1="34" y1="21" x2="40" y2="21" stroke="#5dd6ff" stroke-width="1.5" opacity="0.6"/>
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="42" y2="42">
+          <stop offset="0%" stop-color="#5dd6ff"/>
+          <stop offset="100%" stop-color="#9e8cff"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div>
+      <div class="header-title">智慧校园网络流量监控 · 实时全景大屏</div>
+      <div class="header-sub">面向智慧校园的细粒度网络流量监控与安全态势感知系统 · 苏州大学 · 无敌暴龙战队</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="ws-badge">
+      <span class="ws-dot"></span>
+      <span>WebSocket 已连接</span>
+    </div>
+    <div class="toggle-btns">
+      <button class="active">字节视图</button>
+      <button>包数视图</button>
+    </div>
+    <div class="clock" id="clock">13:21:45</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- METRICS -->
+  <div class="metrics-row">
+    <div class="mcard teal">
+      <div class="mcard-label">实时吞吐量</div>
+      <div class="mcard-value">
+        <span class="mcard-num">647.83</span>
+        <span class="mcard-unit">Mbps</span>
+      </div>
+      <div class="mcard-note">校园出口秒级吞吐 <span class="live-tag">实时</span></div>
+    </div>
+    <div class="mcard amber">
+      <div class="mcard-label">包速率</div>
+      <div class="mcard-value">
+        <span class="mcard-num">12,458.32</span>
+        <span class="mcard-unit">PPS</span>
+      </div>
+      <div class="mcard-note">支持 Bytes / Packets 双维观测</div>
+    </div>
+    <div class="mcard violet">
+      <div class="mcard-label">活跃 IP 数</div>
+      <div class="mcard-value">
+        <span class="mcard-num">2,847</span>
+        <span class="mcard-unit">个</span>
+      </div>
+      <div class="mcard-note">全网双向通信去重统计</div>
+    </div>
+    <div class="mcard green">
+      <div class="mcard-label">监控状态</div>
+      <div class="mcard-value">
+        <span class="mcard-num">稳定</span>
+      </div>
+      <div class="mcard-note">更新时间 13:21:45</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row">
+    <div class="chart-card tall">
+      <div class="chart-badge">双轴视图</div>
+      <div class="chart-title">链路吞吐变化</div>
+      <div class="chart-sub">同时展示 Mbps 与 PPS，适合识别微突发与异常尖峰</div>
+      <div class="chart-body" id="chart-throughput"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-badge">实时</div>
+      <div class="chart-title">应用协议分布</div>
+      <div class="chart-sub">按字节量统计业务构成</div>
+      <div class="chart-body" id="chart-protocol"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-badge">Campus Heatmap</div>
+      <div class="chart-title">区域热力图</div>
+      <div class="chart-sub">按流量显示区域热度分布</div>
+      <div class="chart-body" id="chart-heatmap"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bottom-row">
+    <div class="flow-panel">
+      <div class="panel-header">
+        <span>🔥 Top 流量排行</span>
+        <span class="panel-sub">点击 IP 可查看详情 · 数据每 15 秒刷新</span>
+      </div>
+      <div class="flow-table">
+        <div class="flow-thead">
+          <span>源 IP</span><span>流量</span><span>包数</span><span>协议</span><span>持续时长</span>
+        </div>
+        <div class="flow-tbody">
+          <div class="flow-row">
+            <div class="flow-ip"><span class="flow-rank gold">1</span>10.42.15.128</div>
+            <div class="flow-bytes">2.85 GB</div>
+            <div class="flow-pkts">4,283,691</div>
+            <div class="flow-proto">HTTPS</div>
+            <div class="flow-duration">2小时15分</div>
+          </div>
+          <div class="flow-row">
+            <div class="flow-ip"><span class="flow-rank">2</span>10.42.8.45</div>
+            <div class="flow-bytes">1.92 GB</div>
+            <div class="flow-pkts">2,847,234</div>
+            <div class="flow-proto">HTTP</div>
+            <div class="flow-duration">1小时48分</div>
+          </div>
+          <div class="flow-row">
+            <div class="flow-ip"><span class="flow-rank">3</span>10.42.22.67</div>
+            <div class="flow-bytes">1.45 GB</div>
+            <div class="flow-pkts">2,156,847</div>
+            <div class="flow-proto">DNS</div>
+            <div class="flow-duration">持续活跃</div>
+          </div>
+          <div class="flow-row">
+            <div class="flow-ip"><span class="flow-rank">4</span>10.42.3.89</div>
+            <div class="flow-bytes">986 MB</div>
+            <div class="flow-pkts">1,547,832</div>
+            <div class="flow-proto">SSH</div>
+            <div class="flow-duration">42分钟</div>
+          </div>
+          <div class="flow-row">
+            <div class="flow-ip"><span class="flow-rank">5</span>10.42.18.234</div>
+            <div class="flow-bytes">654 MB</div>
+            <div class="flow-pkts">980,412</div>
+            <div class="flow-proto">FTP</div>
+            <div class="flow-duration">15分钟</div>
+          </div>
+          <div class="flow-row">
+            <div class="flow-ip"><span class="flow-rank">6</span>10.42.7.156</div>
+            <div class="flow-bytes">521 MB</div>
+            <div class="flow-pkts">765,298</div>
+            <div class="flow-proto">SMTP</div>
+            <div class="flow-duration">8分钟</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-panel">
+      <div class="panel-header">📋 系统状态</div>
+      <div class="status-body">
+        <div class="status-item">
+          <span class="status-lbl">数据采集</span>
+          <span class="status-val ok">● 正常</span>
+        </div>
+        <div class="status-item">
+          <span class="status-lbl">威胁检测</span>
+          <span class="status-val ok">● 正常</span>
+        </div>
+        <div class="status-item">
+          <span class="status-lbl">存储服务</span>
+          <span class="status-val ok">● 正常</span>
+        </div>
+        <div class="status-item">
+          <span class="status-lbl">WebSocket</span>
+          <span class="status-val ok">● 已连接</span>
+        </div>
+        <div class="status-item">
+          <span class="status-lbl">今日告警</span>
+          <span class="status-val warn">3 条</span>
+        </div>
+        <div class="status-item">
+          <span class="status-lbl">CPU 使用率</span>
+          <span class="status-val">42%</span>
+        </div>
+        <div class="status-item">
+          <span class="status-lbl">内存使用</span>
+          <span class="status-val">3.2 / 16 GB</span>
+        </div>
+        <div class="status-item">
+          <span class="status-lbl">数据延迟</span>
+          <span class="status-val">&lt; 100ms</span>
+        </div>
+        <div class="status-item">
+          <span class="status-lbl">在线设备</span>
+          <span class="status-val">1,284 台</span>
+        </div>
+        <div class="status-item">
+          <span class="status-lbl">今日流量</span>
+          <span class="status-val">847.3 GB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-item"><span class="footer-dot g"></span>数据采集服务运行中</div>
+  <div class="footer-item"><span class="footer-dot b"></span>最后更新: 2026-04-17 13:21:45</div>
+  <div class="footer-item"><span class="footer-dot y"></span>苏州大学 · 无敌暴龙战队 · T2601487</div>
+</div>
+
+<script>
+// ============ CHARTS ============
+const regions = ['图书馆','教学楼A','教学楼B','行政楼','食堂','体育馆','宿舍区','实验楼'];
+const hours = ['00:00','04:00','08:00','12:00','16:00','20:00'];
+const heatData = [];
+regions.forEach((_, ri) => {
+  hours.forEach((_, hi) => {
+    heatData.push([hi, ri, Math.floor(Math.random() * 80 + 20)]);
+  });
+});
+
+const throughputTimes = ['13:00','13:02','13:04','13:06','13:08','13:10','13:12','13:14','13:16','13:18','13:20','13:22'];
+const throughputMbps = [423,456,512,487,534,521,578,612,598,634,621,648];
+const ppsData = [8234,8976,9543,9124,10123,9867,11234,11876,11324,12234,11987,12458];
+
+const chartOpt = (container, option) => { const c = echarts.init(document.getElementById(container)); c.setOption(option); };
+
+// Throughput
+chartOpt('chart-throughput', {
+  animation: false,
+  tooltip: { trigger:'axis', backgroundColor:'rgba(8,16,31,0.95)', borderColor:'rgba(93,214,255,0.3)', textStyle:{color:'#e7ecff'} },
+  legend: { data:['吞吐量(Mbps)','包速率(PPS)'], textStyle:{color:'#4a6080'}, top:0, left:0 },
+  grid: { left:52, right:20, top:38, bottom:24, containLabel:true },
+  xAxis: {
+    type:'category', boundaryGap:false,
+    data: throughputTimes,
+    axisLine:{lineStyle:{color:'rgba(100,140,220,0.15)'}},
+    axisLabel:{color:'#3a5070', fontSize:11}
+  },
+  yAxis: [
+    { type:'value', name:'Mbps', axisLine:{show:false}, splitLine:{lineStyle:{color:'rgba(100,140,220,0.08)'}}, axisLabel:{color:'#3a5070',fontSize:11} },
+    { type:'value', name:'PPS', axisLine:{show:false}, splitLine:{show:false}, axisLabel:{color:'#3a5070',fontSize:11} }
+  ],
+  series: [
+    {
+      name:'吞吐量(Mbps)', type:'line', smooth:true, symbol:'none',
+      data: throughputMbps,
+      lineStyle:{color:'#5dd6ff', width:3},
+      areaStyle:{color: new echarts.graphic.LinearGradient(0,0,0,1,[
+        {offset:0,color:'rgba(93,214,255,0.25)'},
+        {offset:1,color:'rgba(93,214,255,0.01)'}
+      ])}
+    },
+    {
+      name:'包速率(PPS)', type:'line', yAxisIndex:1, smooth:true, symbol:'none',
+      data: ppsData,
+      lineStyle:{color:'#ffb454', width:2, type:'dashed'}
+    }
+  ]
+});
+
+// Protocol pie
+chartOpt('chart-protocol', {
+  animation: false,
+  tooltip: { trigger:'item', backgroundColor:'rgba(8,16,31,0.95)', borderColor:'rgba(93,214,255,0.3)', textStyle:{color:'#e7ecff'} },
+  legend: { orient:'vertical', right:8, top:'center', textStyle:{color:'#4a6080', fontSize:11}, itemWidth:10, itemHeight:10 },
+  series:[{
+    type:'pie', radius:['38%','68%'], center:['38%','50%'],
+    itemStyle:{borderColor:'#060d1a', borderWidth:2, borderRadius:4},
+    label:{show:true, color:'#8aa8d8', fontSize:11, formatter:'{b}\n{d}%'},
+    data:[
+      {value:45, name:'HTTPS', itemStyle:{color:'#5dd6ff'}},
+      {value:25, name:'HTTP', itemStyle:{color:'#9e8cff'}},
+      {value:15, name:'DNS', itemStyle:{color:'#59d47c'}},
+      {value:8, name:'SSH', itemStyle:{color:'#ffb454'}},
+      {value:7, name:'其他', itemStyle:{color:'#3a5070'}}
+    ]
+  }]
+});
+
+// Heatmap
+chartOpt('chart-heatmap', {
+  animation: false,
+  tooltip: { position:'top', backgroundColor:'rgba(8,16,31,0.95)', borderColor:'rgba(93,214,255,0.3)', textStyle:{color:'#e7ecff'} },
+  grid: { left:62, right:20, top:8, bottom:48 },
+  xAxis: { type:'category', data:hours, axisLine:{lineStyle:{color:'rgba(100,140,220,0.15)'}}, axisLabel:{color:'#3a5070',fontSize:10}, splitArea:{show:true, areaStyle:{color:['rgba(6,15,32,0.5)','rgba(12,28,58,0.3)']}} },
+  yAxis: { type:'category', data:regions, axisLine:{lineStyle:{color:'rgba(100,140,220,0.15)'}}, axisLabel:{color:'#7a91c8',fontSize:10} },
+  visualMap: { min:0, max:100, calculable:true, orient:'horizontal', left:'center', bottom:0, textStyle:{color:'#3a5070'}, inRange:{color:['#0f2c6e','#1f6fff','#34d399','#f59e0b','#ef4444']} },
+  series:[{ type:'heatmap', data:heatData, label:{show:true,color:'#e7ecff',fontSize:9,formatter:p=>Math.round(p.value[2])}, emphasis:{itemStyle:{shadowBlur:10,shadowColor:'rgba(93,214,255,0.4)'}} }]
+});
+
+// Auto clock
+setInterval(() => {
+  const t = new Date();
+  document.getElementById('clock').textContent = t.toLocaleTimeString('zh-CN',{hour12:false});
+}, 1000);
+</script>
+</body>
+</html>

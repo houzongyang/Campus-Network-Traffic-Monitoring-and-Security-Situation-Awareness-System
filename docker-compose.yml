@@ -3,9 +3,9 @@ services:
     image: postgres:15-alpine
     container_name: network-monitor-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: network_monitor
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env or your shell before running docker compose}
+      POSTGRES_DB: ${POSTGRES_DB:-network_monitor}
     ports:
       - "${POSTGRES_HOST_PORT:-55432}:5432"
     volumes:
@@ -23,9 +23,9 @@ services:
       context: ./network-monitor-backend
       dockerfile: Dockerfile
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/network_monitor
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-network_monitor}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env or your shell before running docker compose}
       APP_DEMO_AUTO_INIT: ${APP_DEMO_AUTO_INIT:-false}
       APP_IMPORT_ROOT_PATH: /app/imports
     ports:

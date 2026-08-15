@@ -11,7 +11,8 @@ const formatDecimal = (value) => Number(value || 0).toLocaleString(undefined, {
 })
 
 function IpDetails() {
-  const { selectedIp, metricMode, openIpDetails, goDashboard } = useAppStore()
+  const { selectedIp: _selectedIp, metricMode, openIpDetails, goDashboard } = useAppStore()
+  const selectedIp = _selectedIp || '192.168.1.100' // 临时默认值用于截图
   const { ipProfile, loading, error, fetchIpProfile, clearIpProfile } = useFlowStore()
 
   useEffect(() => {
